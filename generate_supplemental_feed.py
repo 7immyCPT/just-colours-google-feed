@@ -37,7 +37,7 @@ import os
 
 # ── Config ──────────────────────────────────────────────────────────────────
 ECWID_CSV_URL   = None   # Set to None to use local CSV file
-LOCAL_CSV_PATH  = "catalog_2026-04-12_21-10.csv"   # fallback local CSV
+LOCAL_CSV_PATH  = "catalog.csv"   # fallback local CSV
 OUTPUT_FILE     = "supplemental_feed.xml"
 STORE_NAME      = "Just Colours"
 STORE_URL       = "https://justcolours.co.za"

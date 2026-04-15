@@ -3,7 +3,7 @@
   <channel>
     <title>Just Colours -- Supplemental Feed</title>
     <link>https://justcolours.co.za</link>
-    <description>Supplemental Google Shopping feed. Generated: 2026-04-14 04:47 UTC</description>
+    <description>Supplemental Google Shopping feed. Generated: 2026-04-15 04:48 UTC</description>
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>X003TZKCR5</g:id>
@@ -60,59 +60,12 @@
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
-      <g:id>VK-5120-BK-CF</g:id>
-      <g:availability>out of stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>29 ZAR</g:price>
-      <g:brand>Volkano</g:brand>
-      <g:gtin>6009545449309</g:gtin>
-      <g:google_product_category>258</g:google_product_category>
-    </item>
-    <item>
-      <g:store_code>77567544</g:store_code>
-      <g:id>VK-50022-ML</g:id>
-      <g:availability>out of stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>119 ZAR</g:price>
-      <g:brand>Volkano</g:brand>
-      <g:gtin>6009545470457</g:gtin>
-      <g:google_product_category>5869</g:google_product_category>
-    </item>
-    <item>
-      <g:store_code>77567544</g:store_code>
-      <g:id>VK-20120-BK</g:id>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>399 ZAR</g:price>
-      <g:brand>Volkano</g:brand>
-      <g:google_product_category>2168</g:google_product_category>
-    </item>
-    <item>
-      <g:store_code>77567544</g:store_code>
-      <g:id>VK-2009-BKV1</g:id>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>499 ZAR</g:price>
-      <g:brand>Volkano</g:brand>
-      <g:google_product_category>232</g:google_product_category>
-    </item>
-    <item>
-      <g:store_code>77567544</g:store_code>
-      <g:id>VG-202-BK</g:id>
+      <g:id>VK-6101-BK</g:id>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>599 ZAR</g:price>
-      <g:brand>Volkano Gaming</g:brand>
-      <g:google_product_category>2168</g:google_product_category>
-    </item>
-    <item>
-      <g:store_code>77567544</g:store_code>
-      <g:id>VG-201-BK</g:id>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>699 ZAR</g:price>
-      <g:brand>Volkano Gaming</g:brand>
-      <g:google_product_category>2168</g:google_product_category>
+      <g:brand>Volkano</g:brand>
+      <g:gtin>6009247012306</g:gtin>
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
@@ -682,6 +635,7 @@
       <g:condition>new</g:condition>
       <g:price>119 ZAR</g:price>
       <g:brand>Edu-Matic</g:brand>
+      <g:gtin>6009555728470</g:gtin>
       <g:google_product_category>3805</g:google_product_category>
     </item>
     <item>
@@ -718,6 +672,7 @@
       <g:condition>new</g:condition>
       <g:price>549 ZAR</g:price>
       <g:brand>Edu-Matic</g:brand>
+      <g:gtin>6009545407378</g:gtin>
       <g:google_product_category>3805</g:google_product_category>
     </item>
     <item>
@@ -725,9 +680,19 @@
       <g:id>EDU-1044</g:id>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
+      <g:price>359 ZAR</g:price>
+      <g:brand>Edu-Matic</g:brand>
+      <g:gtin>6009545407347</g:gtin>
+      <g:google_product_category>3805</g:google_product_category>
+    </item>
+    <item>
+      <g:store_code>77567544</g:store_code>
+      <g:id>EDU-1036</g:id>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
       <g:price>349 ZAR</g:price>
       <g:brand>Edu-Matic</g:brand>
-      <g:google_product_category>3805</g:google_product_category>
+      <g:gtin>6009545407057</g:gtin>
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
@@ -849,7 +814,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>CR-K2-COMBO</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>16349 ZAR</g:price>
       <g:brand>Creality 3D</g:brand>
@@ -3623,7 +3588,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6009707894077</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>499 ZAR</g:price>
       <g:brand>Samsung</g:brand>
@@ -4694,15 +4659,6 @@
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
-      <g:id>6009545481828 - Base</g:id>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>249 ZAR</g:price>
-      <g:brand>Volkano</g:brand>
-      <g:google_product_category>5869</g:google_product_category>
-    </item>
-    <item>
-      <g:store_code>77567544</g:store_code>
       <g:id>6009545456116</g:id>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
@@ -4710,6 +4666,16 @@
       <g:brand>Volkano</g:brand>
       <g:gtin>6009545456116</g:gtin>
       <g:google_product_category>595</g:google_product_category>
+    </item>
+    <item>
+      <g:store_code>77567544</g:store_code>
+      <g:id>6009545450923</g:id>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>499 ZAR</g:price>
+      <g:brand>Volkano</g:brand>
+      <g:gtin>6009545450923</g:gtin>
+      <g:google_product_category>232</g:google_product_category>
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
@@ -4729,6 +4695,16 @@
       <g:brand>Volkano</g:brand>
       <g:gtin>6009545428908</g:gtin>
       <g:google_product_category>232</g:google_product_category>
+    </item>
+    <item>
+      <g:store_code>77567544</g:store_code>
+      <g:id>6009545428014</g:id>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>399 ZAR</g:price>
+      <g:brand>Volkano</g:brand>
+      <g:gtin>6009545428014</g:gtin>
+      <g:google_product_category>2168</g:google_product_category>
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
@@ -4769,20 +4745,31 @@
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
-      <g:id>6009545415205</g:id>
-      <g:availability>out of stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>99 ZAR</g:price>
-      <g:brand>Volkano</g:brand>
-      <g:gtin>6009545415205</g:gtin>
-    </item>
-    <item>
-      <g:store_code>77567544</g:store_code>
       <g:id>6009540439046</g:id>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>45 ZAR</g:price>
       <g:gtin>6009540439046</g:gtin>
+    </item>
+    <item>
+      <g:store_code>77567544</g:store_code>
+      <g:id>6009247012771</g:id>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>599 ZAR</g:price>
+      <g:brand>Volkano Gaming</g:brand>
+      <g:gtin>6009247012771</g:gtin>
+      <g:google_product_category>2168</g:google_product_category>
+    </item>
+    <item>
+      <g:store_code>77567544</g:store_code>
+      <g:id>6009247012757</g:id>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>699 ZAR</g:price>
+      <g:brand>Volkano Gaming</g:brand>
+      <g:gtin>6009247012757</g:gtin>
+      <g:google_product_category>2168</g:google_product_category>
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
@@ -8285,7 +8272,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>4549292237337</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>1299 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -10454,7 +10441,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>18444</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>45 ZAR</g:price>
       <g:brand>Creality 3D</g:brand>
@@ -10499,7 +10486,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>18432</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>229 ZAR</g:price>
       <g:identifier_exists>no</g:identifier_exists>
@@ -12466,7 +12453,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>16489</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>269 ZAR</g:price>
       <g:brand>Creality 3D</g:brand>
@@ -14695,7 +14682,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>13504</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>69 ZAR</g:price>
       <g:brand>Sublimation Blanks</g:brand>
@@ -14932,7 +14919,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>13452</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>299 ZAR</g:price>
       <g:brand>SA Filament</g:brand>

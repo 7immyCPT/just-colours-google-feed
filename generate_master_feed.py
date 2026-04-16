@@ -8,7 +8,6 @@ the Ecwid REST API directly.  No dependency on the Ecwid-generated XML feed.
 Outputs TWO files:
   master_feed.xml           -- Google Shopping / Performance-Max primary feed
   local_inventory_feed.xml  -- Google Local Inventory feed (in-store data)
-40
 
 Required environment variable:
   ECWID_TOKEN   -- your Ecwid private API token  (set as a GitHub Secret)
@@ -133,16 +132,39 @@ def get_category_code(categories: list, title: str = "") -> str:
 API_BASE = f"https://app.ecwid.com/api/v3/{STORE_ID}"
 
 def api_get(endpoint: str, params: dict = None) -> dict:
-    """GET request to Ecwid API; returns parsed JSON."""
+    """GET request to Ecwid API; returns parsed JSON.
+    
+    Supports two token formats:
+      - Ecwid secret token:  starts with 'secret_'  → passed as ?token= query param
+      - Lightspeed Bearer:   any other value         → passed as Authorization: Bearer header
+    """
     if not ECWID_TOKEN:
         raise RuntimeError(
             "ECWID_TOKEN environment variable is not set.\n"
-            "  Local: export ECWID_TOKEN=secret_XXXX\n"
+            "  Local: export ECWID_TOKEN=your_token_here\n"
             "  GitHub Actions: add it as a repository secret named ECWID_TOKEN"
         )
     qs = "&".join(f"{k}={v}" for k, v in (params or {}).items())
-    url = f"{API_BASE}/{endpoint}" + (f"?{qs}" if qs else "")
-    headers = {"Accept": "application/json", "Authorization": f"Bearer {ECWID_TOKEN}"}
+
+    # Determine auth style
+    is_secret_token = ECWID_TOKEN.startswith("secret_")
+
+    if is_secret_token:
+        # Classic Ecwid token → query parameter
+        url = f"{API_BASE}/{endpoint}?token={ECWID_TOKEN}"
+        if qs:
+            url += f"&{qs}"
+        headers = {"Accept": "application/json"}
+    else:
+        # Lightspeed / OAuth Bearer token → Authorization header
+        url = f"{API_BASE}/{endpoint}"
+        if qs:
+            url += f"?{qs}"
+        headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {ECWID_TOKEN}",
+        }
+
     req = Request(url, headers=headers)
     with urlopen(req, timeout=60) as resp:
         return json.loads(resp.read().decode())
@@ -169,9 +191,13 @@ def is_real_gtin(val: str) -> bool:
     return bool(re.fullmatch(r'\d{8,14}', (val or "").strip()))
 
 def fmt_price(amount) -> str:
-    """Format a numeric price as '1234.00 ZAR'."""
+    """Format a numeric price as '1234 ZAR' (no decimals, matching Ecwid feed format)."""
     try:
-        return f"{float(amount):.2f} {CURRENCY}"
+        v = float(amount)
+        # Use integer format if whole number, otherwise 2 decimal places
+        if v == int(v):
+            return f"{int(v)} {CURRENCY}"
+        return f"{v:.2f} {CURRENCY}"
     except (TypeError, ValueError):
         return ""
 
@@ -204,15 +230,22 @@ def indent_xml(elem, level=0):
 
 # ── Build Shopping Feed ───────────────────────────────────────────────────────
 NS_G = "http://base.google.com/ns/1.0"
+NS_G_ATTR = f'xmlns:g="{NS_G}"'  # for inline namespace declarations
+
+def _g_elem(parent, tag, text, extra_ns=True):
+    """Create a g: namespaced element with optional inline xmlns:g declaration."""
+    if text is None or str(text) == "":
+        return
+    attrs = {f"xmlns:g": NS_G} if extra_ns else {}
+    el = ET.SubElement(parent, f"{{{NS_G}}}{tag}", attrs)
+    el.text = str(text)
 
 def build_shopping_feed(products: list) -> tuple:
-    ET.register_namespace("g", NS_G)
-
-    rss     = ET.Element("rss", {"version": "2.0",
-                                  "xmlns:g": NS_G})
+    # No register_namespace — we want explicit xmlns:g on each tag like Ecwid does
+    rss = ET.Element(f"{{{NS_G}}}rss", {"version": "2.0", f"xmlns:g": NS_G})
     channel = ET.SubElement(rss, "channel")
-    ET.SubElement(channel, "title").text       = f"{STORE_NAME} - Google Shopping Feed"
-    ET.SubElement(channel, "link").text        = STORE_URL
+    ET.SubElement(channel, "title").text = f"{STORE_NAME} - Google Shopping Feed"
+    ET.SubElement(channel, "link").text = STORE_URL
     ET.SubElement(channel, "description").text = (
         f"Master Google Shopping feed for {STORE_NAME}. "
         f"Generated: {_now.strftime('%Y-%m-%d %H:%M UTC')}"
@@ -286,12 +319,14 @@ def build_shopping_feed(products: list) -> tuple:
         weight_g = p.get("weight")   # grams in Ecwid
         weight_str = f"{weight_g:.1f} g" if weight_g else ""
 
+        # ── SKU (needed before build item for g:id) ──────────────────────────
+        sku = p.get("sku") or p.get("vendorCode") or ""
+
         # ── Build <item> ─────────────────────────────────────────────────────
         item = ET.SubElement(channel, "item")
 
         def g_tag(tag, text):
-            if text:
-                ET.SubElement(item, f"{{{NS_G}}}{tag}").text = str(text)
+            _g_elem(item, tag, text, extra_ns=True)
 
         title_el = ET.SubElement(item, "title")
         title_el.text = title
@@ -302,7 +337,9 @@ def build_shopping_feed(products: list) -> tuple:
         desc_el = ET.SubElement(item, "description")
         desc_el.text = description
 
-        g_tag("id",           product_id)
+        # Use SKU as g:id to match Ecwid feed format (not numeric Ecwid ID)
+        g_id = sku if sku else product_id
+        g_tag("id",           g_id)
         g_tag("condition",    condition)
         g_tag("availability", avail)
         g_tag("price",        g_price)
@@ -336,8 +373,6 @@ def build_shopping_feed(products: list) -> tuple:
         if weight_str and weight_str not in ("0.0 g", "0 g"):
             g_tag("shipping_weight", weight_str)
 
-        # MPN from Ecwid SKU (useful for Google)
-        sku = p.get("sku") or p.get("vendorCode") or ""
         if sku:
             g_tag("mpn", sku)
 
@@ -351,9 +386,7 @@ def build_local_inventory_feed(products: list) -> tuple:
     Google Local Inventory feed format.
     Required fields: id, store_code, availability, quantity, price
     """
-    ET.register_namespace("g", NS_G)
-
-    rss     = ET.Element("rss", {"version": "2.0", "xmlns:g": NS_G})
+    rss     = ET.Element(f"{{{NS_G}}}rss", {"version": "2.0", f"xmlns:g": NS_G})
     channel = ET.SubElement(rss, "channel")
     ET.SubElement(channel, "title").text       = f"{STORE_NAME} - Local Inventory Feed"
     ET.SubElement(channel, "link").text        = STORE_URL
@@ -389,10 +422,11 @@ def build_local_inventory_feed(products: list) -> tuple:
         item = ET.SubElement(channel, "item")
 
         def g_tag(tag, text):
-            if text is not None and str(text) != "":
-                ET.SubElement(item, f"{{{NS_G}}}{tag}").text = str(text)
+            _g_elem(item, tag, text, extra_ns=True)
 
-        g_tag("id",              product_id)
+        sku = p.get("sku") or p.get("vendorCode") or ""
+        g_id = sku if sku else product_id
+        g_tag("id",              g_id)
         g_tag("store_code",      LOCAL_STORE["store_code"])
         g_tag("availability",    local_avail)
         g_tag("quantity",        local_qty)
@@ -438,7 +472,7 @@ def main():
     print(f"  Local inventory items: {local_added}\n")
 
     print(f"Step 4: Writing {OUTPUT_SHOPPING}...")
-    indent_xml(shopping_rss)
+    ET.register_namespace("g", NS_G)
     tree = ET.ElementTree(shopping_rss)
     with open(OUTPUT_SHOPPING, "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
@@ -446,7 +480,6 @@ def main():
     print(f"  Done! {os.path.getsize(OUTPUT_SHOPPING) // 1024} KB")
 
     print(f"\nStep 5: Writing {OUTPUT_LOCAL_INV}...")
-    indent_xml(local_rss)
     tree2 = ET.ElementTree(local_rss)
     with open(OUTPUT_LOCAL_INV, "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n')

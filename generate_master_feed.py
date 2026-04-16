@@ -140,8 +140,13 @@ def api_get(endpoint: str, params: dict = None) -> dict:
             "  GitHub Actions: add it as a repository secret named ECWID_TOKEN"
         )
     qs = "&".join(f"{k}={v}" for k, v in (params or {}).items())
-    url = f"{API_BASE}/{endpoint}?token={ECWID_TOKEN}&{qs}" if qs else f"{API_BASE}/{endpoint}?token={ECWID_TOKEN}"
-    req = Request(url, headers={"Accept": "application/json"})
+    if ECWID_TOKEN.startswith("secret_"):
+        url = f"{API_BASE}/{endpoint}?token={ECWID_TOKEN}" + (f"&{qs}" if qs else "")
+        headers = {"Accept": "application/json"}
+    else:
+        url = f"{API_BASE}/{endpoint}" + (f"?{qs}" if qs else "")
+        headers = {"Accept": "application/json", "Authorization": f"Bearer {ECWID_TOKEN}"}
+    req = Request(url, headers=headers)
     with urlopen(req, timeout=60) as resp:
         return json.loads(resp.read().decode())
 

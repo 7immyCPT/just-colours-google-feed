@@ -157,12 +157,10 @@ def api_get(endpoint: str, params: dict = None) -> dict:
         headers = {"Accept": "application/json"}
     else:
         # Lightspeed / OAuth Bearer token → Authorization header
-        url = f"{API_BASE}/{endpoint}"
+       url = f"{API_BASE}/{endpoint}"
         if qs:
             url += f"?{qs}"
-        headers = {
-            "Accept": "application/json",
-            "Authorization": f"Bearer {ECWID_TOKEN}",
+        headers = {"Accept": "application/json", "Authorization": f"Bearer {ECWID_TOKEN}"}
         }
 
     req = Request(url, headers=headers)

@@ -46,9 +46,9 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git reset --soft origin/main
           git add master_feed.xml local_inventory_feed.xml
-          # Only commit if files actually changed
-          git diff --cached --quiet && echo "No changes to commit." || \
+          git diff --cached --quiet && echo "No changes." || \
             git commit -m "chore: auto-update feeds $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin main
-          git push
+          git push origin main

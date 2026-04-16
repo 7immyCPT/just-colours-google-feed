@@ -8,6 +8,7 @@ the Ecwid REST API directly.  No dependency on the Ecwid-generated XML feed.
 Outputs TWO files:
   master_feed.xml           -- Google Shopping / Performance-Max primary feed
   local_inventory_feed.xml  -- Google Local Inventory feed (in-store data)
+40
 
 Required environment variable:
   ECWID_TOKEN   -- your Ecwid private API token  (set as a GitHub Secret)
@@ -37,7 +38,7 @@ STORE_ID    = os.environ.get("STORE_CODE",    "77567544")
 ECWID_TOKEN = os.environ.get("ECWID_TOKEN",   "")          # injected via GitHub Secret
 STORE_NAME  = os.environ.get("STORE_NAME",    "Just Colours")
 STORE_URL   = "https://justcolours.co.za"
-CURRENCY    = "ZAR
+CURRENCY    = "ZAR"
 STORE_CODE  = STORE_ID   # used in local inventory feed as the GMC store code
 
 # Sale date window: from now until SALE_END_DATE (or 30 days out if not set)

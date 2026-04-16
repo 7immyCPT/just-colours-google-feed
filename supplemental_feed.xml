@@ -3,7 +3,7 @@
   <channel>
     <title>Just Colours -- Supplemental Feed</title>
     <link>https://justcolours.co.za</link>
-    <description>Supplemental Google Shopping feed. Generated: 2026-04-15 04:48 UTC</description>
+    <description>Supplemental Google Shopping feed. Generated: 2026-04-16 04:54 UTC</description>
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>X003TZKCR5</g:id>
@@ -85,14 +85,6 @@
       <g:price>299 ZAR</g:price>
       <g:identifier_exists>no</g:identifier_exists>
       <g:google_product_category>2314</g:google_product_category>
-    </item>
-    <item>
-      <g:store_code>77567544</g:store_code>
-      <g:id>SWD-50030-BK</g:id>
-      <g:availability>in stock</g:availability>
-      <g:condition>new</g:condition>
-      <g:price>199 ZAR</g:price>
-      <g:brand>Switched</g:brand>
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
@@ -457,7 +449,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>NOVCAB003</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>150 ZAR</g:price>
       <g:brand>Novaro</g:brand>
@@ -706,7 +698,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>E1000</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>799 ZAR</g:price>
       <g:brand>Novaro</g:brand>
@@ -768,7 +760,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>CTL2105HK</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>999 ZAR</g:price>
       <g:brand>Pantum</g:brand>
@@ -915,7 +907,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>9902057802273</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>169 ZAR</g:price>
       <g:brand>Novaro</g:brand>
@@ -2312,7 +2304,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6950840620019</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -2321,7 +2313,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6950840620002</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -3042,7 +3034,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6009802928561</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>248 ZAR</g:price>
       <g:brand>HP</g:brand>
@@ -3118,7 +3110,7 @@
       <g:id>6009802926475</g:id>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>150 ZAR</g:price>
+      <g:price>399 ZAR</g:price>
       <g:brand>Brother</g:brand>
       <g:gtin>6009802926475</g:gtin>
       <g:google_product_category>2314</g:google_product_category>
@@ -3302,7 +3294,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6009707895081</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>209 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -3366,7 +3358,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6009707894732</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>310 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -3406,7 +3398,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6009707894695</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>225 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -3426,7 +3418,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6009707894671</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>225 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -3615,7 +3607,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6009707894022</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>399 ZAR</g:price>
       <g:brand>Samsung</g:brand>
@@ -4208,7 +4200,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6009707890567</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -4217,7 +4209,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6009707890550</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>100 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -4348,7 +4340,7 @@
       <g:id>6009707890307</g:id>
       <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
-      <g:price>200 ZAR</g:price>
+      <g:price>250 ZAR</g:price>
       <g:brand>Brother</g:brand>
       <g:gtin>6001349715246</g:gtin>
       <g:google_product_category>2314</g:google_product_category>
@@ -4594,6 +4586,15 @@
       <g:brand>Just Colours</g:brand>
       <g:gtin>6009555719850</g:gtin>
       <g:google_product_category>499682</g:google_product_category>
+    </item>
+    <item>
+      <g:store_code>77567544</g:store_code>
+      <g:id>6009555715944</g:id>
+      <g:availability>in stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>199 ZAR</g:price>
+      <g:brand>Switched</g:brand>
+      <g:gtin>6009555715944</g:gtin>
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
@@ -5919,7 +5920,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>6002305026406</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>8 ZAR</g:price>
       <g:brand>Parrot</g:brand>
@@ -7603,7 +7604,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>4977766767781</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>560 ZAR</g:price>
       <g:brand>Brother</g:brand>
@@ -7613,7 +7614,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>4977766767774</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>560 ZAR</g:price>
       <g:brand>Brother</g:brand>
@@ -7622,7 +7623,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>4977766767767</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>560 ZAR</g:price>
       <g:brand>Brother</g:brand>
@@ -7631,7 +7632,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>4977766767750</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>750 ZAR</g:price>
       <g:brand>Brother</g:brand>
@@ -8272,7 +8273,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>4549292237337</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>1299 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -9161,7 +9162,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>4001030132</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>699 ZAR</g:price>
       <g:brand>Creality 3D</g:brand>
@@ -9994,7 +9995,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>3301010122</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>259 ZAR</g:price>
       <g:brand>Creality 3D</g:brand>
@@ -10912,7 +10913,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>17893</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>650 ZAR</g:price>
       <g:brand>FILX</g:brand>
@@ -10922,7 +10923,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>17892</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>325 ZAR</g:price>
       <g:brand>FILX</g:brand>
@@ -10932,7 +10933,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>17891</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>325 ZAR</g:price>
       <g:brand>FILX</g:brand>
@@ -12194,7 +12195,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>16855</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>25 ZAR</g:price>
       <g:brand>Creality 3D</g:brand>
@@ -12443,7 +12444,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>16490</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>269 ZAR</g:price>
       <g:brand>Creality 3D</g:brand>
@@ -14601,6 +14602,15 @@
     </item>
     <item>
       <g:store_code>77567544</g:store_code>
+      <g:id>14610</g:id>
+      <g:availability>out of stock</g:availability>
+      <g:condition>new</g:condition>
+      <g:price>399 ZAR</g:price>
+      <g:brand>Brother</g:brand>
+      <g:google_product_category>2314</g:google_product_category>
+    </item>
+    <item>
+      <g:store_code>77567544</g:store_code>
       <g:id>14609</g:id>
       <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
@@ -15090,7 +15100,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>12701</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>20 ZAR</g:price>
       <g:brand>Cricut Compatible</g:brand>
@@ -15442,7 +15452,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>13003</g:id>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>39 ZAR</g:price>
       <g:brand>HEXIS</g:brand>
@@ -19638,7 +19648,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>044449177800</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>209 ZAR</g:price>
       <g:brand>Canon</g:brand>
@@ -19648,7 +19658,7 @@
     <item>
       <g:store_code>77567544</g:store_code>
       <g:id>024449777231</g:id>
-      <g:availability>out of stock</g:availability>
+      <g:availability>in stock</g:availability>
       <g:condition>new</g:condition>
       <g:price>209 ZAR</g:price>
       <g:brand>Canon</g:brand>

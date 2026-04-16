@@ -1,32 +1,51 @@
-name: Generate Supplemental Feed
+name: Generate Google Feeds
 
 on:
   schedule:
-    - cron: '0 2 * * *'
+    # Runs every 6 hours — keeps feeds fresh without hammering the API
+    - cron: "0 */6 * * *"
   workflow_dispatch:
+    # Also lets you trigger a manual run from the GitHub Actions tab
+    inputs:
+      sale_end_date:
+        description: "Sale end date (YYYY-MM-DDTHH:MM+02:00). Leave blank to use 30-day default."
+        required: false
+        default: ""
 
 jobs:
-  generate-feed:
+  build-feeds:
     runs-on: ubuntu-latest
+
     permissions:
-      contents: write
+      contents: write   # needed to commit the generated XML files back to the repo
+
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      - name: Fetch latest Ecwid feed
+          python-version: "3.11"
+
+      # No extra packages needed — script uses only stdlib
+
+      - name: Generate master feed and local inventory feed
+        env:
+          # ECWID_TOKEN is stored as a GitHub Secret — never exposed in logs or code
+          ECWID_TOKEN: ${{ secrets.ECWID_TOKEN }}
+          STORE_CODE:  "77567544"
+          STORE_NAME:  "Just Colours"
+          # Use manual input if provided, otherwise leave blank (script defaults to 30 days)
+          SALE_END_DATE: ${{ github.event.inputs.sale_end_date }}
+        run: python3 generate_master_feed.py
+
+      - name: Commit and push updated feeds
         run: |
-          curl -L "https://d2hku29108hzuu.cloudfront.net/product_feed/77567544/google_shopping/bapCC3RJp2vFqmkt.xml" -o primary_feed.xml
-          echo "Feed fetched OK"
-      - name: Generate supplemental feed XML
-        run: python generate_supplemental_feed.py
-      - name: Commit and push updated XML
-        run: |
-          git config user.name "github-actions[bot]"
+          git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add supplemental_feed.xml
-          git diff --staged --quiet || git commit -m "chore: auto-update supplemental feed"
+          git add master_feed.xml local_inventory_feed.xml
+          # Only commit if files actually changed
+          git diff --cached --quiet && echo "No changes to commit." || \
+            git commit -m "chore: auto-update feeds $(date -u +'%Y-%m-%d %H:%M UTC')"
           git push

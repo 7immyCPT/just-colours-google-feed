@@ -1,0 +1,45 @@
+name: Generate Google Feeds
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      sale_end_date:
+        description: "Sale end date (YYYY-MM-DDTHH:MM+02:00). Leave blank for 30-day default."
+        required: false
+        default: ""
+
+jobs:
+  build-feeds:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate feeds
+        env:
+          ECWID_TOKEN: ${{ secrets.ECWID_TOKEN }}
+          STORE_CODE: "77567544"
+          STORE_NAME: "Just Colours"
+          SALE_END_DATE: ${{ github.event.inputs.sale_end_date }}
+        run: python3 generate_master_feed.py
+
+      - name: Commit and push updated feeds
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add master_feed.xml local_inventory_feed.xml
+          git diff --cached --quiet && echo "No changes." || \
+            git commit -m "chore: auto-update feeds $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push origin HEAD:main --force-with-lease

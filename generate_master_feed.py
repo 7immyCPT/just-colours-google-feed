@@ -37,7 +37,7 @@ STORE_ID    = os.environ.get("STORE_CODE",    "77567544")
 ECWID_TOKEN = os.environ.get("ECWID_TOKEN",   "")          # injected via GitHub Secret
 STORE_NAME  = os.environ.get("STORE_NAME",    "Just Colours")
 STORE_URL   = "https://justcolours.co.za"
-CURRENCY    = "ZAR"
+CURRENCY    = "ZAR
 STORE_CODE  = STORE_ID   # used in local inventory feed as the GMC store code
 
 # Sale date window: from now until SALE_END_DATE (or 30 days out if not set)
@@ -140,12 +140,8 @@ def api_get(endpoint: str, params: dict = None) -> dict:
             "  GitHub Actions: add it as a repository secret named ECWID_TOKEN"
         )
     qs = "&".join(f"{k}={v}" for k, v in (params or {}).items())
-    if ECWID_TOKEN.startswith("secret_"):
-        url = f"{API_BASE}/{endpoint}?token={ECWID_TOKEN}" + (f"&{qs}" if qs else "")
-        headers = {"Accept": "application/json"}
-    else:
-        url = f"{API_BASE}/{endpoint}" + (f"?{qs}" if qs else "")
-        headers = {"Accept": "application/json", "Authorization": f"Bearer {ECWID_TOKEN}"}
+    url = f"{API_BASE}/{endpoint}" + (f"?{qs}" if qs else "")
+    headers = {"Accept": "application/json", "Authorization": f"Bearer {ECWID_TOKEN}"}
     req = Request(url, headers=headers)
     with urlopen(req, timeout=60) as resp:
         return json.loads(resp.read().decode())

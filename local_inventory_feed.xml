@@ -3,7 +3,7 @@
   <channel>
     <title>Just Colours - Local Inventory Feed</title>
     <link>https://justcolours.co.za</link>
-    <description>Local inventory feed for Just Colours. Generated: 2026-04-16 13:51 UTC</description>
+    <description>Local inventory feed for Just Colours. Generated: 2026-04-16 19:21 UTC</description>
     <item>
       <g:id>584090686</g:id>
       <g:store_code>77567544</g:store_code>
@@ -612,8 +612,8 @@
     <item>
       <g:id>823481756</g:id>
       <g:store_code>77567544</g:store_code>
-      <g:availability>in stock</g:availability>
-      <g:quantity>1</g:quantity>
+      <g:availability>out of stock</g:availability>
+      <g:quantity>0</g:quantity>
       <g:price>16999.00 ZAR</g:price>
       <g:sale_price>13999.00 ZAR</g:sale_price>
       <g:sale_price_effective_date>2026-04-16T00:00+02:00/</g:sale_price_effective_date>
@@ -1377,7 +1377,7 @@
       <g:id>481783827</g:id>
       <g:store_code>77567544</g:store_code>
       <g:availability>in stock</g:availability>
-      <g:quantity>3</g:quantity>
+      <g:quantity>2</g:quantity>
       <g:price>149.00 ZAR</g:price>
       <g:pickup_method>buy</g:pickup_method>
       <g:pickup_sla>same day</g:pickup_sla>
@@ -8195,7 +8195,7 @@
       <g:id>617459251</g:id>
       <g:store_code>77567544</g:store_code>
       <g:availability>in stock</g:availability>
-      <g:quantity>12</g:quantity>
+      <g:quantity>11</g:quantity>
       <g:price>259.00 ZAR</g:price>
       <g:pickup_method>buy</g:pickup_method>
       <g:pickup_sla>same day</g:pickup_sla>
@@ -11875,7 +11875,7 @@
       <g:id>616876273</g:id>
       <g:store_code>77567544</g:store_code>
       <g:availability>in stock</g:availability>
-      <g:quantity>12</g:quantity>
+      <g:quantity>11</g:quantity>
       <g:price>45.00 ZAR</g:price>
       <g:pickup_method>buy</g:pickup_method>
       <g:pickup_sla>same day</g:pickup_sla>
@@ -13432,7 +13432,7 @@
     <item>
       <g:id>504973103</g:id>
       <g:store_code>77567544</g:store_code>
-      <g:availability>in stock</g:availability>
+      <g:availability>out of stock</g:availability>
       <g:quantity>0</g:quantity>
       <g:price>79.00 ZAR</g:price>
       <g:pickup_method>buy</g:pickup_method>
@@ -14039,7 +14039,7 @@
       <g:id>791299358</g:id>
       <g:store_code>77567544</g:store_code>
       <g:availability>in stock</g:availability>
-      <g:quantity>2</g:quantity>
+      <g:quantity>1</g:quantity>
       <g:price>269.00 ZAR</g:price>
       <g:pickup_method>buy</g:pickup_method>
       <g:pickup_sla>same day</g:pickup_sla>

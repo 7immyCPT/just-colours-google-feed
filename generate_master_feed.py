@@ -147,21 +147,10 @@ def api_get(endpoint: str, params: dict = None) -> dict:
     qs = "&".join(f"{k}={v}" for k, v in (params or {}).items())
 
     # Determine auth style
-    is_secret_token = ECWID_TOKEN.startswith("secret_")
-
-    if is_secret_token:
-        # Classic Ecwid token → query parameter
-        url = f"{API_BASE}/{endpoint}?token={ECWID_TOKEN}"
-        if qs:
-            url += f"&{qs}"
-        headers = {"Accept": "application/json"}
-    else:
-        # Lightspeed / OAuth Bearer token → Authorization header
-       url = f"{API_BASE}/{endpoint}"
-        if qs:
-            url += f"?{qs}"
-        headers = {"Accept": "application/json", "Authorization": f"Bearer {ECWID_TOKEN}"}
-        }
+    url = f"{API_BASE}/{endpoint}"
+    if qs:
+        url += f"?{qs}"
+    headers = {"Accept": "application/json", "Authorization": f"Bearer {ECWID_TOKEN}"}
 
     req = Request(url, headers=headers)
     with urlopen(req, timeout=60) as resp:

@@ -1,479 +1,208 @@
 #!/usr/bin/env python3
-"""
-Just Colours -- Google Shopping MASTER Feed Generator
-======================================================
-Produces a single, complete Google Merchant Center primary feed by calling
-the Ecwid REST API directly.  No dependency on the Ecwid-generated XML feed.
-
-Outputs TWO files:
-  master_feed.xml           -- Google Shopping / Performance-Max primary feed
-  local_inventory_feed.xml  -- Google Local Inventory feed (in-store data)
-
-Required environment variable:
-  ECWID_TOKEN   -- your Ecwid private API token  (set as a GitHub Secret)
-
-Optional environment variables (have safe defaults):
-  STORE_CODE    -- your Ecwid store ID          (default: 77567544)
-  SALE_END_DATE -- ISO-8601 end date for sales  (default: 30 days from now)
-  STORE_NAME    -- display name                 (default: Just Colours)
-
-Run locally:
-  export ECWID_TOKEN=secret_XXXX
-  python3 generate_master_feed.py
-"""
-
-import os
-import re
-import json
-import math
-import time
+"""Just Colours -- Google Shopping Master Feed Generator"""
+import os, re, json, time
 from datetime import datetime, timezone, timedelta
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 import xml.etree.ElementTree as ET
 
-# ── Configuration ────────────────────────────────────────────────────────────
-STORE_ID    = os.environ.get("STORE_CODE",    "77567544")
-ECWID_TOKEN = os.environ.get("ECWID_TOKEN",   "")          # injected via GitHub Secret
-STORE_NAME  = os.environ.get("STORE_NAME",    "Just Colours")
+# ── Config ────────────────────────────────────────────────────────────────────
+STORE_ID    = os.environ.get("STORE_CODE", "77567544")
+TOKEN       = os.environ.get("ECWID_TOKEN", "")
+STORE_NAME  = os.environ.get("STORE_NAME", "Just Colours")
 STORE_URL   = "https://justcolours.co.za"
 CURRENCY    = "ZAR"
-STORE_CODE  = STORE_ID   # used in local inventory feed as the GMC store code
+TZ          = "+02:00"
+NOW         = datetime.now(timezone.utc)
+SALE_START  = NOW.strftime(f"%Y-%m-%dT00:00{TZ}")
+SALE_END    = os.environ.get("SALE_END_DATE",
+              (NOW + timedelta(days=30)).strftime(f"%Y-%m-%dT23:59{TZ}"))
+LOCAL_STORE = {"store_code": STORE_ID, "pickup_method": "buy", "pickup_sla": "same day"}
+OUT_SHOP    = "master_feed.xml"
+OUT_LOCAL   = "local_inventory_feed.xml"
+NS          = "http://base.google.com/ns/1.0"
 
-# Sale date window: from now until SALE_END_DATE (or 30 days out if not set)
-TZ_OFFSET   = "+02:00"   # South Africa / SAST
-_now        = datetime.now(timezone.utc)
-_sale_start = _now.strftime(f"%Y-%m-%dT00:00{TZ_OFFSET}")
+# Register once — ET will use g: prefix automatically
+ET.register_namespace("g", NS)
 
-def _default_sale_end():
-    end = _now + timedelta(days=30)
-    return end.strftime(f"%Y-%m-%dT23:59{TZ_OFFSET}")
-
-SALE_END    = os.environ.get("SALE_END_DATE", _default_sale_end())
-
-# Local store details (for local inventory feed)
-LOCAL_STORE = {
-    "store_code":    STORE_CODE,
-    "pickup_method": "buy",          # buy | reserve | ship to store | not supported
-    "pickup_sla":    "same day",     # same day | next day | 2-day | 3-day | 4-day | 5-day | 6-day | multi-week
-}
-
-OUTPUT_SHOPPING   = "master_feed.xml"
-OUTPUT_LOCAL_INV  = "local_inventory_feed.xml"
-
-# ── Google product category map ───────────────────────────────────────────────
-CATEGORY_MAP = [
-    ("FDM Printer",           "499682"),
-    ("Resin Printer",         "499682"),
-    ("3D Printer",            "499682"),
-    ("3D Printing",           "499682"),
-    ("Filament",              "5074"),
-    ("3D Printer Suppli",     "5074"),
-    ("3D Printer Accessor",   "5074"),
-    ("3D Pen",                "5074"),
-    ("Resin",                 "5074"),
-    ("Printer",               "304"),
-    ("Scanner",               "304"),
-    ("Ink",                   "2314"),
-    ("Toner",                 "2314"),
-    ("Cartridge",             "2314"),
-    ("Print Head",            "2314"),
-    ("Ribbon",                "2314"),
-    ("Laser Cutter",          "7340"),
-    ("Engraver",              "7340"),
-    ("Heat Press",            "7340"),
-    ("Vinyl Cutter",          "7340"),
-    ("Cable",                 "258"),
-    ("USB Hub",               "74"),
-    ("Network",               "342"),
-    ("Storage",               "595"),
-    ("Headphone",             "232"),
-    ("Headset",               "232"),
-    ("Speaker",               "232"),
-    ("Keyboard",              "2168"),
-    ("Mouse",                 "3387"),
-    ("Monitor",               "397"),
-    ("Camera",                "142"),
-    ("Power Bank",            "5869"),
-    ("Battery",               "5869"),
-    ("UPS",                   "5869"),
-    ("Sublimation",           "2872"),
-    ("Art",                   "2872"),
-    ("Craft",                 "2872"),
-    ("DTF",                   "2872"),
-    ("HTV",                   "2872"),
-    ("Book",                  "783"),
-    ("Pen",                   "932"),
-    ("Pencil",                "932"),
-    ("Marker",                "932"),
-    ("Label",                 "5122"),
-    ("Sticker",               "5122"),
-    ("Envelope",              "1522"),
-    ("Paper",                 "923"),
-    ("File",                  "950"),
-    ("Folder",                "950"),
-    ("Laptop",                "328"),
-    ("Computer",              "328"),
-    ("Smart",                 "4745"),
-    ("RC ",                   "1249"),
-    ("Electronic Component",  "222"),
-    ("Toy",                   "3805"),
-    ("Packaging",             "5508"),
+CATS = [
+    ("FDM Printer","499682"),("Resin Printer","499682"),("3D Printer","499682"),
+    ("3D Printing","499682"),("Filament","5074"),("3D Printer Suppli","5074"),
+    ("3D Printer Accessor","5074"),("3D Pen","5074"),("Resin","5074"),
+    ("Printer","304"),("Scanner","304"),("Ink","2314"),("Toner","2314"),
+    ("Cartridge","2314"),("Print Head","2314"),("Ribbon","2314"),
+    ("Laser Cutter","7340"),("Engraver","7340"),("Heat Press","7340"),
+    ("Vinyl Cutter","7340"),("Cable","258"),("USB Hub","74"),("Network","342"),
+    ("Storage","595"),("Headphone","232"),("Headset","232"),("Speaker","232"),
+    ("Keyboard","2168"),("Mouse","3387"),("Monitor","397"),("Camera","142"),
+    ("Power Bank","5869"),("Battery","5869"),("UPS","5869"),
+    ("Sublimation","2872"),("Art","2872"),("Craft","2872"),("DTF","2872"),
+    ("HTV","2872"),("Book","783"),("Pen","932"),("Pencil","932"),
+    ("Marker","932"),("Label","5122"),("Sticker","5122"),("Envelope","1522"),
+    ("Paper","923"),("File","950"),("Folder","950"),("Laptop","328"),
+    ("Computer","328"),("Smart","4745"),("RC ","1249"),
+    ("Electronic Component","222"),("Toy","3805"),("Packaging","5508"),
 ]
 
-def get_category_code(categories: list, title: str = "") -> str:
-    text = (" ".join(categories) + " " + title).lower()
-    for keyword, code in CATEGORY_MAP:
-        if keyword.lower() in text:
-            return code
+def cat_code(cats, title=""):
+    t = (" ".join(cats) + " " + title).lower()
+    for k, c in CATS:
+        if k.lower() in t: return c
     return ""
 
-# ── Ecwid API helpers ─────────────────────────────────────────────────────────
-API_BASE = f"https://app.ecwid.com/api/v3/{STORE_ID}"
+def api(ep, params=None):
+    if not TOKEN: raise RuntimeError("ECWID_TOKEN not set")
+    qs = "&".join(f"{k}={v}" for k,v in (params or {}).items())
+    url = f"https://app.ecwid.com/api/v3/{STORE_ID}/{ep}" + (f"?{qs}" if qs else "")
+    req = Request(url, headers={"Accept":"application/json","Authorization":f"Bearer {TOKEN}"})
+    with urlopen(req, timeout=60) as r:
+        return json.loads(r.read().decode())
 
-def api_get(endpoint: str, params: dict = None) -> dict:
-    """GET request to Ecwid API; returns parsed JSON.
-    
-    Supports two token formats:
-      - Ecwid secret token:  starts with 'secret_'  → passed as ?token= query param
-      - Lightspeed Bearer:   any other value         → passed as Authorization: Bearer header
-    """
-    if not ECWID_TOKEN:
-        raise RuntimeError(
-            "ECWID_TOKEN environment variable is not set.\n"
-            "  Local: export ECWID_TOKEN=your_token_here\n"
-            "  GitHub Actions: add it as a repository secret named ECWID_TOKEN"
-        )
-    qs = "&".join(f"{k}={v}" for k, v in (params or {}).items())
-
-    # Determine auth style
-    is_secret_token = ECWID_TOKEN.startswith("secret_")
-
-    if is_secret_token:
-        # Classic Ecwid token → query parameter
-        url = f"{API_BASE}/{endpoint}?token={ECWID_TOKEN}"
-        if qs:
-            url += f"&{qs}"
-        headers = {"Accept": "application/json"}
-    else:
-        # Lightspeed / OAuth Bearer token → Authorization header
-        url = f"{API_BASE}/{endpoint}"
-        if qs:
-            url += f"?{qs}"
-        headers = {
-            "Accept": "application/json",
-            "Authorization": f"Bearer {ECWID_TOKEN}",
-        }
-
-    req = Request(url, headers=headers)
-    with urlopen(req, timeout=60) as resp:
-        return json.loads(resp.read().decode())
-
-def fetch_all_products() -> list:
-    """Page through Ecwid products endpoint and return every enabled product."""
-    products = []
-    offset   = 0
-    limit    = 100
+def fetch():
+    products, off, lim = [], 0, 100
     while True:
-        data = api_get("products", {"offset": offset, "limit": limit, "enabled": "true"})
-        batch = data.get("items", [])
-        products.extend(batch)
-        total = data.get("total", 0)
-        offset += limit
-        print(f"  Fetched {len(products)}/{total} products...")
-        if offset >= total:
-            break
-        time.sleep(0.3)   # be polite to the API
+        d = api("products", {"offset":off,"limit":lim,"enabled":"true"})
+        products.extend(d.get("items",[]))
+        tot = d.get("total",0)
+        print(f"  Fetched {len(products)}/{tot}")
+        off += lim
+        if off >= tot: break
+        time.sleep(0.3)
     return products
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-def is_real_gtin(val: str) -> bool:
-    return bool(re.fullmatch(r'\d{8,14}', (val or "").strip()))
+def gtin_ok(v): return bool(re.fullmatch(r'\d{8,14}', (v or "").strip()))
 
-def fmt_price(amount) -> str:
-    """Format a numeric price as '1234 ZAR' (no decimals, matching Ecwid feed format)."""
+def price(a):
     try:
-        v = float(amount)
-        # Use integer format if whole number, otherwise 2 decimal places
-        if v == int(v):
-            return f"{int(v)} {CURRENCY}"
-        return f"{v:.2f} {CURRENCY}"
-    except (TypeError, ValueError):
-        return ""
+        v = float(a)
+        return f"{int(v)} {CURRENCY}" if v == int(v) else f"{v:.2f} {CURRENCY}"
+    except: return ""
 
-def clean_description(text: str) -> str:
-    """Strip markdown bold/italic, excessive whitespace, HTML tags."""
-    text = re.sub(r'<[^>]+>', ' ', text or "")
-    text = re.sub(r'\*{1,2}([^*]+)\*{1,2}', r'\1', text)
-    text = re.sub(r'_{1,2}([^_]+)_{1,2}', r'\1', text)
-    text = re.sub(r'\s+', ' ', text).strip()
-    return text[:5000]   # Google max description length
+def clean(t):
+    t = re.sub(r'<[^>]+>',' ', t or "")
+    t = re.sub(r'\*{1,2}([^*]+)\*{1,2}', r'\1', t)
+    return re.sub(r'\s+',' ', t).strip()[:5000]
 
-def availability_str(in_stock: bool, quantity) -> str:
-    if in_stock:
-        return "in stock"
-    return "out of stock"
+def g(parent, tag, val):
+    if val is None or str(val) == "": return
+    ET.SubElement(parent, f"{{{NS}}}{tag}").text = str(val)
 
-def indent_xml(elem, level=0):
-    pad = "\n" + "  " * level
-    if len(elem):
-        if not elem.text or not elem.text.strip():
-            elem.text = pad + "  "
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = pad
-        for child in elem:
-            indent_xml(child, level + 1)
-        if not child.tail or not child.tail.strip():
-            child.tail = pad
-    elif level and (not elem.tail or not elem.tail.strip()):
-        elem.tail = pad
+def new_rss(title):
+    rss = ET.Element("rss", {"version":"2.0"})
+    ch  = ET.SubElement(rss, "channel")
+    ET.SubElement(ch, "title").text = title
+    ET.SubElement(ch, "link").text  = STORE_URL
+    ET.SubElement(ch, "description").text = f"Generated: {NOW.strftime('%Y-%m-%d %H:%M UTC')}"
+    return rss, ch
 
-# ── Build Shopping Feed ───────────────────────────────────────────────────────
-NS_G = "http://base.google.com/ns/1.0"
-
-# Register namespace prefix ONCE globally — Python will then output g: prefix cleanly
-ET.register_namespace("g", NS_G)
-
-def _g_sub(parent, tag, text):
-    """Add a g: namespaced subelement. Skips if text is empty/None."""
-    if text is None or str(text) == "":
-        return
-    el = ET.SubElement(parent, f"{{{NS_G}}}{tag}")
-    el.text = str(text)
-
-def _new_rss(title):
-    """Create a clean RSS root. register_namespace handles the g: prefix."""
-    rss = ET.Element("rss", version="2.0")
-    channel = ET.SubElement(rss, "channel")
-    ET.SubElement(channel, "title").text = title
-    ET.SubElement(channel, "link").text = STORE_URL
-    ET.SubElement(channel, "description").text = (
-        f"Generated: {_now.strftime('%Y-%m-%d %H:%M UTC')}"
-    )
-    return rss, channel
-
-def build_shopping_feed(products: list) -> tuple:
-    rss, channel = _new_rss(f"{STORE_NAME} - Google Shopping Feed")
-
-    added = skipped = sale_count = 0
-
+def build_shopping(products):
+    rss, ch = new_rss(f"{STORE_NAME} - Google Shopping Feed")
+    added = skipped = sales = 0
     for p in products:
-        product_id = str(p.get("id", ""))
-        if not product_id:
-            skipped += 1
-            continue
+        pid = str(p.get("id",""))
+        if not pid: skipped += 1; continue
+        prc   = p.get("price", 0)
+        cp    = p.get("compareToPrice")
+        on_sale = cp and float(cp) > float(prc)
+        gp    = price(cp if on_sale else prc)
+        gsp   = price(prc) if on_sale else None
+        if not gp: skipped += 1; continue
 
-        # ── Prices ──────────────────────────────────────────────────────────
-        price         = p.get("price", 0)
-        compare_price = p.get("compareToPrice")   # original / was-price
-        on_sale       = compare_price and float(compare_price) > float(price)
+        sku   = p.get("sku") or p.get("vendorCode") or ""
+        brand = gtin_val = ""
+        for a in p.get("attributes",[]):
+            n = (a.get("name") or "").lower(); v = (a.get("value") or "").strip()
+            if n in ("brand","manufacturer"): brand = v
+            elif n in ("gtin","upc","ean","isbn","mpn"): gtin_val = v
 
-        # Google expects:
-        #   g:price         = the "was" / original price   (shown struck-through)
-        #   g:sale_price    = the current selling price
-        # If NOT on sale, g:price = current price, no g:sale_price
-        g_price      = fmt_price(compare_price if on_sale else price)
-        g_sale_price = fmt_price(price) if on_sale else None
+        media  = p.get("media") or {}
+        imgs   = media.get("images",[])
+        mains  = [i for i in imgs if i.get("isMain")] or imgs
+        def bu(i): return i.get("imageOriginalUrl") or i.get("image800pxUrl") or i.get("imageUrl","")
+        img0   = bu(mains[0]) if mains else ""
+        extras = [bu(i) for i in mains[1:5] if bu(i)]
 
-        if not g_price:
-            skipped += 1
-            continue
+        cats   = [c.get("name","") for c in p.get("categories",[])]
+        wt     = p.get("weight")
+        wtstr  = f"{wt:.1f} g" if wt else ""
 
-        # ── Basic fields ─────────────────────────────────────────────────────
-        title       = (p.get("name") or "").strip()
-        description = clean_description(p.get("description") or p.get("name") or "")
-        url         = p.get("url") or f"{STORE_URL}/products/{p.get('slug','')}"
-        in_stock    = p.get("inStock", False)
-        quantity    = p.get("quantity", 0)
-        avail       = availability_str(in_stock, quantity)
-        condition   = "new"   # adjust if you stock used/refurb items
-        brand       = ""
-        gtin_val    = ""
+        item = ET.SubElement(ch, "item")
+        ET.SubElement(item, "title").text       = (p.get("name") or "").strip()
+        ET.SubElement(item, "link").text        = p.get("url") or f"{STORE_URL}/products/{p.get('slug','')}"
+        ET.SubElement(item, "description").text = clean(p.get("description") or p.get("name",""))
 
-        # ── Attributes (Ecwid stores brand/GTIN here) ─────────────────────
-        for attr in p.get("attributes", []):
-            name = (attr.get("name") or "").lower()
-            val  = (attr.get("value") or "").strip()
-            if name in ("brand", "manufacturer"):
-                brand = val
-            elif name in ("gtin", "upc", "ean", "isbn", "mpn"):
-                gtin_val = val
-
-        # ── Images ──────────────────────────────────────────────────────────
-        media     = p.get("media", {})
-        images    = media.get("images", []) if media else []
-        img_objs  = [i for i in images if i.get("isMain")]
-        if not img_objs:
-            img_objs = images
-        image_url = ""
-        extra_images = []
-        if img_objs:
-            def best_url(img):
-                return (img.get("imageOriginalUrl") or
-                        img.get("image800pxUrl") or
-                        img.get("imageUrl") or "")
-            image_url    = best_url(img_objs[0])
-            extra_images = [best_url(i) for i in img_objs[1:5] if best_url(i)]
-
-        # ── Categories ───────────────────────────────────────────────────────
-        cats = [c.get("name", "") for c in p.get("categories", [])]
-        google_cat = get_category_code(cats, title)
-
-        # ── Weight ───────────────────────────────────────────────────────────
-        weight_g = p.get("weight")   # grams in Ecwid
-        weight_str = f"{weight_g:.1f} g" if weight_g else ""
-
-        # ── SKU (needed before build item for g:id) ──────────────────────────
-        sku = p.get("sku") or p.get("vendorCode") or ""
-
-        # ── Build <item> ─────────────────────────────────────────────────────
-        item = ET.SubElement(channel, "item")
-
-        ET.SubElement(item, "title").text = title
-        ET.SubElement(item, "link").text = url
-        ET.SubElement(item, "description").text = description
-
-        # Use SKU as g:id to match Ecwid feed format (not numeric Ecwid ID)
-        g_id = sku if sku else product_id
-        _g_sub(item, "id",           g_id)
-        _g_sub(item, "condition",    condition)
-        _g_sub(item, "availability", avail)
-        _g_sub(item, "price",        g_price)
-
-        if g_sale_price:
-            _g_sub(item, "sale_price", g_sale_price)
-            _g_sub(item, "sale_price_effective_date",
-                   f"{_sale_start}/{SALE_END}")
-            sale_count += 1
-
-        if image_url:
-            _g_sub(item, "image_link", image_url)
-        for ei in extra_images:
-            _g_sub(item, "additional_image_link", ei)
-
-        if brand:
-            _g_sub(item, "brand", brand)
-
-        if is_real_gtin(gtin_val):
-            _g_sub(item, "gtin", gtin_val)
-        elif not brand:
-            _g_sub(item, "identifier_exists", "no")
-
-        if google_cat:
-            _g_sub(item, "google_product_category", google_cat)
-
-        if cats:
-            _g_sub(item, "product_type", " > ".join(cats[:2]))
-
-        if weight_str and weight_str not in ("0.0 g", "0 g"):
-            _g_sub(item, "shipping_weight", weight_str)
-
-        if sku:
-            _g_sub(item, "mpn", sku)
-
+        g(item, "id",           sku or pid)
+        g(item, "condition",    "new")
+        g(item, "availability", "in stock" if p.get("inStock") else "out of stock")
+        g(item, "price",        gp)
+        if gsp:
+            g(item, "sale_price", gsp)
+            g(item, "sale_price_effective_date", f"{SALE_START}/{SALE_END}")
+            sales += 1
+        if img0: g(item, "image_link", img0)
+        for e in extras: g(item, "additional_image_link", e)
+        if brand: g(item, "brand", brand)
+        if gtin_ok(gtin_val): g(item, "gtin", gtin_val)
+        elif not brand: g(item, "identifier_exists", "no")
+        gc = cat_code(cats, p.get("name",""))
+        if gc: g(item, "google_product_category", gc)
+        if cats: g(item, "product_type", " > ".join(cats[:2]))
+        if wtstr and wtstr not in ("0.0 g","0 g"): g(item, "shipping_weight", wtstr)
+        if sku: g(item, "mpn", sku)
         added += 1
+    return rss, added, skipped, sales
 
-    return rss, added, skipped, sale_count
-
-# ── Build Local Inventory Feed ────────────────────────────────────────────────
-def build_local_inventory_feed(products: list) -> tuple:
-    """
-    Google Local Inventory feed format.
-    Required fields: id, store_code, availability, quantity, price
-    """
-    rss, channel = _new_rss(f"{STORE_NAME} - Local Inventory Feed")
-
+def build_local(products):
+    rss, ch = new_rss(f"{STORE_NAME} - Local Inventory Feed")
     added = 0
-
     for p in products:
-        product_id = str(p.get("id", ""))
-        if not product_id:
-            continue
-
-        price         = p.get("price", 0)
-        compare_price = p.get("compareToPrice")
-        on_sale       = compare_price and float(compare_price) > float(price)
-
-        g_price      = fmt_price(compare_price if on_sale else price)
-        g_sale_price = fmt_price(price) if on_sale else None
-
-        if not g_price:
-            continue
-
-        in_stock = p.get("inStock", False)
-        quantity = p.get("quantity", 0)
-
-        # For local inventory, use actual quantity if tracked, else assume in stock = available
-        local_qty    = quantity if p.get("unlimited") is False else (1 if in_stock else 0)
-        local_avail  = "in stock" if in_stock else "out of stock"
-
-        item = ET.SubElement(channel, "item")
-
-        sku = p.get("sku") or p.get("vendorCode") or ""
-        g_id = sku if sku else product_id
-        _g_sub(item, "id",              g_id)
-        _g_sub(item, "store_code",      LOCAL_STORE["store_code"])
-        _g_sub(item, "availability",    local_avail)
-        _g_sub(item, "quantity",        local_qty)
-        _g_sub(item, "price",           g_price)
-
-        if g_sale_price:
-            _g_sub(item, "sale_price", g_sale_price)
-            _g_sub(item, "sale_price_effective_date",
-                   f"{_sale_start}/{SALE_END}")
-
-        _g_sub(item, "pickup_method",   LOCAL_STORE["pickup_method"])
-        _g_sub(item, "pickup_sla",      LOCAL_STORE["pickup_sla"])
-
+        pid = str(p.get("id",""))
+        if not pid: continue
+        prc   = p.get("price", 0)
+        cp    = p.get("compareToPrice")
+        on_sale = cp and float(cp) > float(prc)
+        gp    = price(cp if on_sale else prc)
+        gsp   = price(prc) if on_sale else None
+        if not gp: continue
+        in_s  = p.get("inStock", False)
+        qty   = p.get("quantity", 0)
+        lqty  = qty if p.get("unlimited") is False else (1 if in_s else 0)
+        sku   = p.get("sku") or p.get("vendorCode") or ""
+        item  = ET.SubElement(ch, "item")
+        g(item, "id",              sku or pid)
+        g(item, "store_code",      LOCAL_STORE["store_code"])
+        g(item, "availability",    "in stock" if in_s else "out of stock")
+        g(item, "quantity",        lqty)
+        g(item, "price",           gp)
+        if gsp:
+            g(item, "sale_price", gsp)
+            g(item, "sale_price_effective_date", f"{SALE_START}/{SALE_END}")
+        g(item, "pickup_method",   LOCAL_STORE["pickup_method"])
+        g(item, "pickup_sla",      LOCAL_STORE["pickup_sla"])
         added += 1
-
     return rss, added
 
-# ── Main ──────────────────────────────────────────────────────────────────────
-def main():
-    print("\n" + "=" * 60)
-    print(f"  Just Colours -- Master Feed Generator")
-    print(f"  {_now.strftime('%Y-%m-%d %H:%M UTC')}")
-    print("=" * 60 + "\n")
-
-    if not ECWID_TOKEN:
-        print("ERROR: ECWID_TOKEN is not set.")
-        print("  Local:          export ECWID_TOKEN=secret_XXXX")
-        print("  GitHub Actions: add ECWID_TOKEN as a repository secret")
-        raise SystemExit(1)
-
-    print("Step 1: Fetching all products from Ecwid API...")
-    products = fetch_all_products()
-    print(f"  Total products fetched: {len(products)}\n")
-
-    print("Step 2: Building Google Shopping master feed...")
-    shopping_rss, added, skipped, sale_count = build_shopping_feed(products)
-    print(f"  Products added : {added}")
-    print(f"  On sale        : {sale_count}")
-    print(f"  Skipped        : {skipped}\n")
-
-    print("Step 3: Building Local Inventory feed...")
-    local_rss, local_added = build_local_inventory_feed(products)
-    print(f"  Local inventory items: {local_added}\n")
-
-    print(f"Step 4: Writing {OUTPUT_SHOPPING}...")
-    tree = ET.ElementTree(shopping_rss)
-    with open(OUTPUT_SHOPPING, "w", encoding="utf-8") as f:
+def write(rss, path):
+    tree = ET.ElementTree(rss)
+    with open(path, "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         tree.write(f, encoding="unicode", xml_declaration=False)
-    print(f"  Done! {os.path.getsize(OUTPUT_SHOPPING) // 1024} KB")
 
-    print(f"\nStep 5: Writing {OUTPUT_LOCAL_INV}...")
-    tree2 = ET.ElementTree(local_rss)
-    with open(OUTPUT_LOCAL_INV, "w", encoding="utf-8") as f:
-        f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        tree2.write(f, encoding="unicode", xml_declaration=False)
-    print(f"  Done! {os.path.getsize(OUTPUT_LOCAL_INV) // 1024} KB")
-
-    print("\n✅ Feed URLs (after commit to GitHub):")
-    print(f"  Shopping:  https://raw.githubusercontent.com/7immyCPT/just-colours-google-feed/main/{OUTPUT_SHOPPING}")
-    print(f"  Local Inv: https://raw.githubusercontent.com/7immyCPT/just-colours-google-feed/main/{OUTPUT_LOCAL_INV}")
-    print()
+def main():
+    print(f"\n{'='*60}\n  {STORE_NAME} -- Master Feed Generator\n  {NOW.strftime('%Y-%m-%d %H:%M UTC')}\n{'='*60}\n")
+    if not TOKEN: print("ERROR: ECWID_TOKEN not set"); raise SystemExit(1)
+    print("Fetching products...")
+    products = fetch()
+    print(f"Total: {len(products)}\n")
+    print("Building shopping feed...")
+    rss, added, skipped, sales = build_shopping(products)
+    print(f"Added:{added} Sales:{sales} Skipped:{skipped}")
+    print("Building local inventory feed...")
+    lrss, ladded = build_local(products)
+    print(f"Local:{ladded}")
+    write(rss,  OUT_SHOP);  print(f"Wrote {OUT_SHOP}  ({os.path.getsize(OUT_SHOP)//1024}KB)")
+    write(lrss, OUT_LOCAL); print(f"Wrote {OUT_LOCAL} ({os.path.getsize(OUT_LOCAL)//1024}KB)")
+    print(f"\n✅ Done!")
 
 if __name__ == "__main__":
     main()

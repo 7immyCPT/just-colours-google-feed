@@ -147,10 +147,23 @@ def api_get(endpoint: str, params: dict = None) -> dict:
     qs = "&".join(f"{k}={v}" for k, v in (params or {}).items())
 
     # Determine auth style
-    url = f"{API_BASE}/{endpoint}"
-    if qs:
-        url += f"?{qs}"
-    headers = {"Accept": "application/json", "Authorization": f"Bearer {ECWID_TOKEN}"}
+    is_secret_token = ECWID_TOKEN.startswith("secret_")
+
+    if is_secret_token:
+        # Classic Ecwid token → query parameter
+        url = f"{API_BASE}/{endpoint}?token={ECWID_TOKEN}"
+        if qs:
+            url += f"&{qs}"
+        headers = {"Accept": "application/json"}
+    else:
+        # Lightspeed / OAuth Bearer token → Authorization header
+        url = f"{API_BASE}/{endpoint}"
+        if qs:
+            url += f"?{qs}"
+        headers = {
+            "Accept": "application/json",
+            "Authorization": f"Bearer {ECWID_TOKEN}",
+        }
 
     req = Request(url, headers=headers)
     with urlopen(req, timeout=60) as resp:
@@ -217,26 +230,30 @@ def indent_xml(elem, level=0):
 
 # ── Build Shopping Feed ───────────────────────────────────────────────────────
 NS_G = "http://base.google.com/ns/1.0"
-NS_G_ATTR = f'xmlns:g="{NS_G}"'  # for inline namespace declarations
 
-def _g_elem(parent, tag, text, extra_ns=True):
-    """Create a g: namespaced element with optional inline xmlns:g declaration."""
+# Register namespace prefix ONCE globally — Python will then output g: prefix cleanly
+ET.register_namespace("g", NS_G)
+
+def _g_sub(parent, tag, text):
+    """Add a g: namespaced subelement. Skips if text is empty/None."""
     if text is None or str(text) == "":
         return
-    attrs = {f"xmlns:g": NS_G} if extra_ns else {}
-    el = ET.SubElement(parent, f"{{{NS_G}}}{tag}", attrs)
+    el = ET.SubElement(parent, f"{{{NS_G}}}{tag}")
     el.text = str(text)
 
-def build_shopping_feed(products: list) -> tuple:
-    # No register_namespace — we want explicit xmlns:g on each tag like Ecwid does
-    rss = ET.Element(f"{{{NS_G}}}rss", {"version": "2.0", f"xmlns:g": NS_G})
+def _new_rss(title):
+    """Create a clean RSS root. register_namespace handles the g: prefix."""
+    rss = ET.Element("rss", version="2.0")
     channel = ET.SubElement(rss, "channel")
-    ET.SubElement(channel, "title").text = f"{STORE_NAME} - Google Shopping Feed"
+    ET.SubElement(channel, "title").text = title
     ET.SubElement(channel, "link").text = STORE_URL
     ET.SubElement(channel, "description").text = (
-        f"Master Google Shopping feed for {STORE_NAME}. "
         f"Generated: {_now.strftime('%Y-%m-%d %H:%M UTC')}"
     )
+    return rss, channel
+
+def build_shopping_feed(products: list) -> tuple:
+    rss, channel = _new_rss(f"{STORE_NAME} - Google Shopping Feed")
 
     added = skipped = sale_count = 0
 
@@ -312,56 +329,47 @@ def build_shopping_feed(products: list) -> tuple:
         # ── Build <item> ─────────────────────────────────────────────────────
         item = ET.SubElement(channel, "item")
 
-        def g_tag(tag, text):
-            _g_elem(item, tag, text, extra_ns=True)
-
-        title_el = ET.SubElement(item, "title")
-        title_el.text = title
-
-        link_el = ET.SubElement(item, "link")
-        link_el.text = url
-
-        desc_el = ET.SubElement(item, "description")
-        desc_el.text = description
+        ET.SubElement(item, "title").text = title
+        ET.SubElement(item, "link").text = url
+        ET.SubElement(item, "description").text = description
 
         # Use SKU as g:id to match Ecwid feed format (not numeric Ecwid ID)
         g_id = sku if sku else product_id
-        g_tag("id",           g_id)
-        g_tag("condition",    condition)
-        g_tag("availability", avail)
-        g_tag("price",        g_price)
+        _g_sub(item, "id",           g_id)
+        _g_sub(item, "condition",    condition)
+        _g_sub(item, "availability", avail)
+        _g_sub(item, "price",        g_price)
 
         if g_sale_price:
-            g_tag("sale_price", g_sale_price)
-            g_tag("sale_price_effective_date",
-                  f"{_sale_start}/{SALE_END}")
+            _g_sub(item, "sale_price", g_sale_price)
+            _g_sub(item, "sale_price_effective_date",
+                   f"{_sale_start}/{SALE_END}")
             sale_count += 1
 
         if image_url:
-            g_tag("image_link", image_url)
+            _g_sub(item, "image_link", image_url)
         for ei in extra_images:
-            g_tag("additional_image_link", ei)
+            _g_sub(item, "additional_image_link", ei)
 
         if brand:
-            g_tag("brand", brand)
+            _g_sub(item, "brand", brand)
 
         if is_real_gtin(gtin_val):
-            g_tag("gtin", gtin_val)
+            _g_sub(item, "gtin", gtin_val)
         elif not brand:
-            g_tag("identifier_exists", "no")
+            _g_sub(item, "identifier_exists", "no")
 
         if google_cat:
-            g_tag("google_product_category", google_cat)
+            _g_sub(item, "google_product_category", google_cat)
 
-        # product_type from Ecwid categories
         if cats:
-            g_tag("product_type", " > ".join(cats[:2]))
+            _g_sub(item, "product_type", " > ".join(cats[:2]))
 
         if weight_str and weight_str not in ("0.0 g", "0 g"):
-            g_tag("shipping_weight", weight_str)
+            _g_sub(item, "shipping_weight", weight_str)
 
         if sku:
-            g_tag("mpn", sku)
+            _g_sub(item, "mpn", sku)
 
         added += 1
 
@@ -373,14 +381,7 @@ def build_local_inventory_feed(products: list) -> tuple:
     Google Local Inventory feed format.
     Required fields: id, store_code, availability, quantity, price
     """
-    rss     = ET.Element(f"{{{NS_G}}}rss", {"version": "2.0", f"xmlns:g": NS_G})
-    channel = ET.SubElement(rss, "channel")
-    ET.SubElement(channel, "title").text       = f"{STORE_NAME} - Local Inventory Feed"
-    ET.SubElement(channel, "link").text        = STORE_URL
-    ET.SubElement(channel, "description").text = (
-        f"Local inventory feed for {STORE_NAME}. "
-        f"Generated: {_now.strftime('%Y-%m-%d %H:%M UTC')}"
-    )
+    rss, channel = _new_rss(f"{STORE_NAME} - Local Inventory Feed")
 
     added = 0
 
@@ -408,24 +409,21 @@ def build_local_inventory_feed(products: list) -> tuple:
 
         item = ET.SubElement(channel, "item")
 
-        def g_tag(tag, text):
-            _g_elem(item, tag, text, extra_ns=True)
-
         sku = p.get("sku") or p.get("vendorCode") or ""
         g_id = sku if sku else product_id
-        g_tag("id",              g_id)
-        g_tag("store_code",      LOCAL_STORE["store_code"])
-        g_tag("availability",    local_avail)
-        g_tag("quantity",        local_qty)
-        g_tag("price",           g_price)
+        _g_sub(item, "id",              g_id)
+        _g_sub(item, "store_code",      LOCAL_STORE["store_code"])
+        _g_sub(item, "availability",    local_avail)
+        _g_sub(item, "quantity",        local_qty)
+        _g_sub(item, "price",           g_price)
 
         if g_sale_price:
-            g_tag("sale_price", g_sale_price)
-            g_tag("sale_price_effective_date",
-                  f"{_sale_start}/{SALE_END}")
+            _g_sub(item, "sale_price", g_sale_price)
+            _g_sub(item, "sale_price_effective_date",
+                   f"{_sale_start}/{SALE_END}")
 
-        g_tag("pickup_method",   LOCAL_STORE["pickup_method"])
-        g_tag("pickup_sla",      LOCAL_STORE["pickup_sla"])
+        _g_sub(item, "pickup_method",   LOCAL_STORE["pickup_method"])
+        _g_sub(item, "pickup_sla",      LOCAL_STORE["pickup_sla"])
 
         added += 1
 
@@ -459,7 +457,6 @@ def main():
     print(f"  Local inventory items: {local_added}\n")
 
     print(f"Step 4: Writing {OUTPUT_SHOPPING}...")
-    ET.register_namespace("g", NS_G)
     tree = ET.ElementTree(shopping_rss)
     with open(OUTPUT_SHOPPING, "w", encoding="utf-8") as f:
         f.write('<?xml version="1.0" encoding="UTF-8"?>\n')

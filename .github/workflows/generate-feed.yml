@@ -2,43 +2,36 @@ name: Generate Google Feeds
 
 on:
   schedule:
-    # Runs every 6 hours — keeps feeds fresh without hammering the API
     - cron: "0 */6 * * *"
   workflow_dispatch:
-    # Also lets you trigger a manual run from the GitHub Actions tab
     inputs:
       sale_end_date:
-        description: "Sale end date (YYYY-MM-DDTHH:MM+02:00). Leave blank to use 30-day default."
+        description: "Sale end date (YYYY-MM-DDTHH:MM+02:00). Leave blank for 30-day default."
         required: false
         default: ""
 
 jobs:
   build-feeds:
     runs-on: ubuntu-latest
-
     permissions:
-      contents: write   # needed to commit the generated XML files back to the repo
+      contents: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # No extra packages needed — script uses only stdlib
-
-      - name: Generate master feed and local inventory feed
+      - name: Generate feeds
         env:
-          # ECWID_TOKEN is stored as a GitHub Secret — never exposed in logs or code
           ECWID_TOKEN: ${{ secrets.ECWID_TOKEN }}
-          STORE_CODE:  "77567544"
-          STORE_NAME:  "Just Colours"
-          # Use manual input if provided, otherwise leave blank (script defaults to 30 days)
+          STORE_CODE: "77567544"
+          STORE_NAME: "Just Colours"
           SALE_END_DATE: ${{ github.event.inputs.sale_end_date }}
         run: python3 generate_master_feed.py
 
@@ -46,9 +39,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git reset --soft origin/main
           git add master_feed.xml local_inventory_feed.xml
           git diff --cached --quiet && echo "No changes." || \
             git commit -m "chore: auto-update feeds $(date -u +'%Y-%m-%d %H:%M UTC')"
-          git push origin main
+          git push origin HEAD:main --force-with-lease

@@ -6,7 +6,7 @@ from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 import xml.etree.ElementTree as ET
 
-# ── Config ────────────────────────────────────────────────────────────────────
+# ââ Config ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 STORE_ID    = os.environ.get("STORE_CODE", "77567544")
 TOKEN       = os.environ.get("ECWID_TOKEN", "")
 STORE_NAME  = os.environ.get("STORE_NAME", "Just Colours")
@@ -14,15 +14,15 @@ STORE_URL   = "https://justcolours.co.za"
 CURRENCY    = "ZAR"
 TZ          = "+02:00"
 NOW         = datetime.now(timezone.utc)
-SALE_START  = NOW.strftime(f"%Y-%m-%dT00:00{TZ}")
+SALE_START  = NOW.strftime(f"%Y-%m-%dT00:00:00{TZ}")
 SALE_END    = os.environ.get("SALE_END_DATE",
-              (NOW + timedelta(days=30)).strftime(f"%Y-%m-%dT23:59{TZ}"))
+              (NOW + timedelta(days=30)).strftime(f"%Y-%m-%dT23:59:59{TZ}"))
 LOCAL_STORE = {"store_code": STORE_ID, "pickup_method": "buy", "pickup_sla": "same day"}
 OUT_SHOP    = "master_feed.xml"
 OUT_LOCAL   = "local_inventory_feed.xml"
 NS          = "http://base.google.com/ns/1.0"
 
-# Register once — ET will use g: prefix automatically
+# Register once â ET will use g: prefix automatically
 ET.register_namespace("g", NS)
 
 CATS = [
@@ -202,7 +202,7 @@ def main():
     print(f"Local:{ladded}")
     write(rss,  OUT_SHOP);  print(f"Wrote {OUT_SHOP}  ({os.path.getsize(OUT_SHOP)//1024}KB)")
     write(lrss, OUT_LOCAL); print(f"Wrote {OUT_LOCAL} ({os.path.getsize(OUT_LOCAL)//1024}KB)")
-    print(f"\n✅ Done!")
+    print(f"\nâ Done!")
 
 if __name__ == "__main__":
     main()

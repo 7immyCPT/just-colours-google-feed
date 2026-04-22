@@ -131,7 +131,7 @@ def build_shopping(products):
         wtstr  = f"{wt:.1f} g" if wt else ""
 
         item = ET.SubElement(ch, "item")
-              multi_g(item, "included_destination", ["Shopping ads", "Free listings", "Local inventory ads", "Free local listings"])
+        multi_g(item, "included_destination", ["Shopping ads", "Free listings", "Local inventory ads", "Free local listings"])
         ET.SubElement(item, "title").text       = (p.get("name") or "").strip()
         ET.SubElement(item, "link").text        = p.get("url") or f"{STORE_URL}/products/{p.get('slug','')}"
         ET.SubElement(item, "description").text = clean(p.get("description") or p.get("name",""))

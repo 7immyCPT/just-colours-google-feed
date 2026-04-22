@@ -86,7 +86,12 @@ def clean(t):
 def g(parent, tag, val):
     if val is None or str(val) == "": return
     ET.SubElement(parent, f"{{{NS}}}{tag}").text = str(val)
-
+  
+def multi_g(parent, tag, vals):
+    for val in vals:
+        if val is None or str(val) == "": continue
+        ET.SubElement(parent, f"{{{NS}}}{tag}").text = str(val)
+      
 def new_rss(title):
     rss = ET.Element("rss", {"version":"2.0"})
     ch  = ET.SubElement(rss, "channel")
@@ -94,7 +99,6 @@ def new_rss(title):
     ET.SubElement(ch, "link").text  = STORE_URL
     ET.SubElement(ch, "description").text = f"Generated: {NOW.strftime('%Y-%m-%d %H:%M UTC')}"
     return rss, ch
-
 def build_shopping(products):
     rss, ch = new_rss(f"{STORE_NAME} - Google Shopping Feed")
     added = skipped = sales = 0
@@ -127,6 +131,7 @@ def build_shopping(products):
         wtstr  = f"{wt:.1f} g" if wt else ""
 
         item = ET.SubElement(ch, "item")
+              multi_g(item, "included_destination", ["Shopping ads", "Free listings", "Local inventory ads", "Free local listings"])
         ET.SubElement(item, "title").text       = (p.get("name") or "").strip()
         ET.SubElement(item, "link").text        = p.get("url") or f"{STORE_URL}/products/{p.get('slug','')}"
         ET.SubElement(item, "description").text = clean(p.get("description") or p.get("name",""))

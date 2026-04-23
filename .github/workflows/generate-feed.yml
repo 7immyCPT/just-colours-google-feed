@@ -30,6 +30,7 @@ jobs:
           STORE_CODE: "77567544"
           STORE_NAME: "Just Colours"
           SALE_END_DATE: ${{ github.event.inputs.sale_end_date }}
+          GBP_STORE_CODE: ${{ secrets.GBP_STORE_CODE }}
         run: python3 generate_master_feed.py
 
       - name: Commit and push updated feeds

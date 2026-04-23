@@ -17,11 +17,9 @@ NOW         = datetime.now(timezone.utc)
 SALE_START  = NOW.strftime(f"%Y-%m-%dT00:00:00{TZ}")
 SALE_END    = (os.environ.get("SALE_END_DATE") or
               (NOW + timedelta(days=30)).strftime(f"%Y-%m-%dT23:59:59{TZ}"))
-# GBP_STORE_CODE must match your Google Business Profile store code exactly.
-# It is NOT the same as the Ecwid store ID. Set it as a GitHub secret.
 GBP_STORE_CODE = os.environ.get("GBP_STORE_CODE", "")
 LOCAL_STORE   = {"store_code": GBP_STORE_CODE or STORE_ID, "pickup_method": "buy", "pickup_sla": "same day"}
-SHIPPING_FREE_ABOVE = 1500   # ZAR — free shipping threshold
+SHIPPING_FREE_ABOVE = 1500
 SHIPPING_RATE       = "99 ZAR"
 OUT_SHOP      = "master_feed.xml"
 OUT_LOCAL     = "local_inventory_feed.xml"

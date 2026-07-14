@@ -27,6 +27,12 @@ LOCAL_STORE    = {"store_code": GBP_STORE_CODE or STORE_ID,
 SHIPPING_FREE_ABOVE = 1500
 SHIPPING_RATE       = "99 ZAR"
 
+# Supplier-backed / pre-order items: worst-case lead time used for Google's
+# required availability_date when we report availability=backorder.
+# Matches the "14-20 days depending on routes and couriers" range communicated
+# to customers at checkout - we use the upper bound so the date is always safe.
+PREORDER_LEAD_DAYS = int(os.environ.get("PREORDER_LEAD_DAYS", "20"))
+
 OUT_SHOP  = "master_feed.xml"
 OUT_LOCAL = "local_inventory_feed.xml"
 
@@ -45,6 +51,17 @@ def is_excluded(p):
     cats = " ".join(c.get("name", "") for c in p.get("categories", [])).lower()
     combined = name + " " + cats
     return any(kw in combined for kw in EXCLUDED_KEYWORDS)
+
+def is_preorder(p):
+    """True if this product is supplier-backed / pre-order (ALLOW_PREORDER in Ecwid).
+
+    Primary signal is Ecwid's own out-of-stock visibility flag. The ribbon-text
+    check is a belt-and-braces backup in case that flag isn't returned by the
+    API for a given product for any reason.
+    """
+    if p.get("outOfStockVisibilityBehaviour") == "ALLOW_PREORDER":
+        return True
+    return (p.get("ribbon") or {}).get("text") == "Ships from ZAR Supplier"
 
 # ── Category map ─────────────────────────────────────────────────────────
 CATS = [
@@ -198,7 +215,14 @@ def build_shopping(products):
 
         g(item, "id",           item_id)
         g(item, "condition",    "new")
-        g(item, "availability", "in stock" if p.get("inStock") else "out of stock")
+
+        if is_preorder(p):
+            g(item, "availability", "backorder")
+            avail_date = (NOW + timedelta(days=PREORDER_LEAD_DAYS)).strftime(f"%Y-%m-%dT%H:%M{TZ}")
+            g(item, "availability_date", avail_date)
+        else:
+            g(item, "availability", "in stock" if p.get("inStock") else "out of stock")
+
         g(item, "price",        gp)
 
         if gsp:
@@ -237,6 +261,12 @@ def build_local(products):
     for p in products:
         # Skip gift cards / vouchers
         if is_excluded(p):
+            excluded += 1
+            continue
+
+        # Supplier-backed / pre-order items aren't physically in-store, so they
+        # don't belong in the local pickup feed at all.
+        if is_preorder(p):
             excluded += 1
             continue
 

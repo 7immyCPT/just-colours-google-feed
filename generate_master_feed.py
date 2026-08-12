@@ -33,6 +33,12 @@ SHIPPING_RATE       = "99 ZAR"
 # to customers at checkout - we use the upper bound so the date is always safe.
 PREORDER_LEAD_DAYS = int(os.environ.get("PREORDER_LEAD_DAYS", "20"))
 
+# Fallback only: ribbon-text keywords identifying supplier-backed / pre-order
+# stock, used only for products catalog_sync hasn't re-synced yet (so they
+# have no SupplyFlag attribute). Kept in sync with CONFIG.ribbon in the
+# just-colours-shipping Cloudflare Worker.
+SUPPLIER_RIBBON_KEYWORDS = ["supplier", "drop ship", "dropship", "pre-order", "preorder", "pre order"]
+
 OUT_SHOP  = "master_feed.xml"
 OUT_LOCAL = "local_inventory_feed.xml"
 
@@ -52,16 +58,29 @@ def is_excluded(p):
     combined = name + " " + cats
     return any(kw in combined for kw in EXCLUDED_KEYWORDS)
 
+def supply_flag(p):
+    """Machine-readable state written by catalog_sync as a hidden 'SupplyFlag'
+    product attribute: 'local' / 'supplier' / 'preorder', or None if this
+    product hasn't been touched by a catalog_sync run yet."""
+    for a in p.get("attributes", []) or []:
+        if a.get("name") == "SupplyFlag":
+            return (a.get("value") or "").strip().lower() or None
+    return None
+
 def is_preorder(p):
     """True if this product is supplier-backed / pre-order (ALLOW_PREORDER in Ecwid).
 
-    Primary signal is Ecwid's own out-of-stock visibility flag. The ribbon-text
-    check is a belt-and-braces backup in case that flag isn't returned by the
-    API for a given product for any reason.
+    Primary signal is the SupplyFlag attribute. Falls back to Ecwid's own
+    out-of-stock visibility flag, then ribbon-text keywords, for any product
+    that predates the SupplyFlag rollout.
     """
+    flag = supply_flag(p)
+    if flag is not None:
+        return flag in ("supplier", "preorder")
     if p.get("outOfStockVisibilityBehaviour") == "ALLOW_PREORDER":
         return True
-    return (p.get("ribbon") or {}).get("text") == "Ships from ZAR Supplier"
+    ribbon_text = ((p.get("ribbon") or {}).get("text") or "").lower()
+    return any(kw in ribbon_text for kw in SUPPLIER_RIBBON_KEYWORDS)
 
 # ── Category map ─────────────────────────────────────────────────────────
 CATS = [

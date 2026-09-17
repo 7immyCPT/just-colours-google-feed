@@ -24,6 +24,12 @@ GBP_STORE_CODE = os.environ.get("GBP_STORE_CODE", "")
 LOCAL_STORE    = {"store_code": GBP_STORE_CODE or STORE_ID,
                   "pickup_method": "buy", "pickup_sla": "same day"}
 
+# Supplier-backed / pre-order items are still pickup-able, just with a longer
+# lead time than locally-stocked items. Google's pickup_sla only accepts a
+# small enum ("same day", "1 day", "2 days", ... "5 days", "6+ days") - "5
+# days" is the closest match to our supplier lead time without overstating it.
+SUPPLIER_PICKUP_SLA = os.environ.get("SUPPLIER_PICKUP_SLA", "5 days")
+
 SHIPPING_FREE_ABOVE = 1500
 SHIPPING_RATE       = "99 ZAR"
 
@@ -283,14 +289,10 @@ def build_local(products):
             excluded += 1
             continue
 
-        # Supplier-backed / pre-order items aren't physically in-store, so they
-        # don't belong in the local pickup feed at all.
-        if is_preorder(p):
-            excluded += 1
-            continue
-
         item_id = product_id(p)
         if not item_id: continue
+
+        preorder = is_preorder(p)
 
         prc     = p.get("price", 0)
         cp      = p.get("compareToPrice")
@@ -300,9 +302,13 @@ def build_local(products):
 
         if not gp: continue
 
-        in_s = p.get("inStock", False)
+        # Supplier-backed / pre-order items aren't physically on our shelf, but
+        # they're still available to order in via the supplier - list them as
+        # in-stock-for-pickup with the longer supplier SLA rather than dropping
+        # them from the feed entirely.
+        in_s = True if preorder else p.get("inStock", False)
         qty  = p.get("quantity", 0)
-        lqty = qty if p.get("unlimited") is False else (9999 if in_s else 0)
+        lqty = 9999 if preorder else (qty if p.get("unlimited") is False else (9999 if in_s else 0))
 
         item = ET.SubElement(ch, "item")
         g(item, "id",           item_id)
@@ -316,7 +322,8 @@ def build_local(products):
             g(item, "sale_price_effective_date", f"{SALE_START}/{SALE_END}")
 
         g(item, "pickup_method", LOCAL_STORE["pickup_method"])
-        g(item, "pickup_sla",    LOCAL_STORE["pickup_sla"])
+        sla = SUPPLIER_PICKUP_SLA if preorder else LOCAL_STORE["pickup_sla"]
+        g(item, "pickup_sla",    sla)
 
         added += 1
 

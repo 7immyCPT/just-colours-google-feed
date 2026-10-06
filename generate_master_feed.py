@@ -51,6 +51,29 @@ EXCLUDED_KEYWORDS = [
     "digital gift", "store credit",
 ]
 
+# ── Feed-only overrides (don't touch the storefront / Lightspeed data) ────
+# Used where thin Lightspeed-synced titles/descriptions trigger false policy
+# flags in Merchant Center. Keyed by Ecwid product ID.
+OVERRIDES = {
+    "544491538": {  # flagged as "Tobacco products" (ink refill read as e-liquid)
+        "title": "Universal Printer Ink Refill Kit - Black 100ml",
+        "description": ("Black printer ink refill kit, 100ml. Universal ink for "
+                        "refilling inkjet printer cartridges - for use in inkjet "
+                        "printers. Printer consumable / office supply."),
+    },
+    "828440936": {  # flagged as "Restricted adult content"
+        "description": ("Volkano USB 2.0 flash drive with 32GB storage. Portable "
+                        "USB memory stick for storing, backing up and transferring "
+                        "documents, photos and files between computers and other "
+                        "USB-enabled devices."),
+    },
+    "828439928": {  # flagged as "Restricted adult content"
+        "description": ("Baseline USB flash drive with 16GB storage. Portable USB "
+                        "memory stick for reliable data storage and quick file "
+                        "transfers between computers and other USB-enabled devices."),
+    },
+}
+
 def is_excluded(p):
     """Return True if this product should be excluded from all feeds."""
     name = (p.get("name") or "").lower()
@@ -224,18 +247,33 @@ def build_shopping(products):
         wt    = p.get("weight")
         wtstr = f"{wt:.1f} g" if wt else ""
 
-        item = ET.SubElement(ch, "item")
-        multi_g(item, "included_destination",
-                ["Shopping ads", "Free listings", "Local inventory ads", "Free local listings"])
+        # Products with no image are disapproved by Google - skip them and
+        # log so they can be fixed in Ecwid.
+        if not img0:
+            print(f"  SKIP (no image): id={item_id} {p.get('name','')}")
+            skipped += 1; continue
 
-        ET.SubElement(item, "title").text       = (p.get("name") or "").strip()
+        preorder = is_preorder(p)
+
+        item = ET.SubElement(ch, "item")
+        # Supplier-backed / pre-order items are excluded from the local
+        # inventory feed (not physically in-store), so don't request local
+        # destinations for them - otherwise Merchant Center flags them as
+        # "Missing local inventory data".
+        dests = ["Shopping ads", "Free listings"]
+        if not preorder:
+            dests += ["Local inventory ads", "Free local listings"]
+        multi_g(item, "included_destination", dests)
+
+        ov = OVERRIDES.get(item_id, {})
+        ET.SubElement(item, "title").text       = ov.get("title") or (p.get("name") or "").strip()
         ET.SubElement(item, "link").text        = p.get("url") or f"{STORE_URL}/products/{p.get('slug','')}"
-        ET.SubElement(item, "description").text = clean(p.get("description") or p.get("name", ""))
+        ET.SubElement(item, "description").text = ov.get("description") or clean(p.get("description") or p.get("name", ""))
 
         g(item, "id",           item_id)
         g(item, "condition",    "new")
 
-        if is_preorder(p):
+        if preorder:
             g(item, "availability", "backorder")
             avail_date = (NOW + timedelta(days=PREORDER_LEAD_DAYS)).strftime(f"%Y-%m-%dT%H:%M{TZ}")
             g(item, "availability_date", avail_date)

@@ -33,6 +33,10 @@ SHIPPING_RATE       = "99 ZAR"
 # to customers at checkout - we use the upper bound so the date is always safe.
 PREORDER_LEAD_DAYS = int(os.environ.get("PREORDER_LEAD_DAYS", "20"))
 
+# Items the supplier (SMD) has in stock (SupplyFlag=supplier): about 3 days
+# processing + 3-7 days shipping, so 10 days is the safe upper bound.
+SUPPLIER_LEAD_DAYS = int(os.environ.get("SUPPLIER_LEAD_DAYS", "10"))
+
 # Fallback only: ribbon-text keywords identifying supplier-backed / pre-order
 # stock, used only for products catalog_sync hasn't re-synced yet (so they
 # have no SupplyFlag attribute). Kept in sync with CONFIG.ribbon in the
@@ -275,7 +279,8 @@ def build_shopping(products):
 
         if preorder:
             g(item, "availability", "backorder")
-            avail_date = (NOW + timedelta(days=PREORDER_LEAD_DAYS)).strftime(f"%Y-%m-%dT%H:%M{TZ}")
+            lead = SUPPLIER_LEAD_DAYS if supply_flag(p) == "supplier" else PREORDER_LEAD_DAYS
+            avail_date = (NOW + timedelta(days=lead)).strftime(f"%Y-%m-%dT%H:%M{TZ}")
             g(item, "availability_date", avail_date)
         else:
             g(item, "availability", "in stock" if p.get("inStock") else "out of stock")

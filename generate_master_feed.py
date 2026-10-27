@@ -29,8 +29,8 @@ SHIPPING_RATE       = "99 ZAR"
 
 # Supplier-backed / pre-order items: worst-case lead time used for Google's
 # required availability_date when we report availability=backorder.
-# Matches the "14-20 days depending on routes and couriers" range communicated
-# to customers at checkout - we use the upper bound so the date is always safe.
+# Pre-orders (true backorders) keep the longer 20-day date; supplier-stocked items
+# use SUPPLIER_LEAD_DAYS below. Upper bound so the date is always safe.
 PREORDER_LEAD_DAYS = int(os.environ.get("PREORDER_LEAD_DAYS", "20"))
 
 # Items the supplier (SMD) has in stock (SupplyFlag=supplier): about 3 days

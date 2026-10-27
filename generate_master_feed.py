@@ -101,6 +101,11 @@ def is_preorder(p):
     out-of-stock visibility flag, then ribbon-text keywords, for any product
     that predates the SupplyFlag rollout.
     """
+    # Stock WE hold wins over every supplier/pre-order signal (same rule as
+    # catalog_sync's sync_storefront): a stale ALLOW_PREORDER setting on a product
+    # we physically hold must not drop it from the local inventory feed.
+    if not p.get("unlimited") and (p.get("quantity") or 0) > 0:
+        return False
     flag = supply_flag(p)
     if flag is not None:
         return flag in ("supplier", "preorder")
